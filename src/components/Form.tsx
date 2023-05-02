@@ -1,16 +1,23 @@
 import { FieldValues, useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 
-type FormData = {
-  name: string;
-  age: number;
-};
+const schema = z.object({
+  name: z.string().min(3, { message: 'Name must be at least 3 characters.' }),
+  age: z
+    .number({ invalid_type_error: 'Please enter your age.' })
+    .min(14, { message: 'You must be over 14 years old.' }),
+});
+
+type FormData = z.infer<typeof schema>;
 
 const Form = () => {
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<FormData>();
+  } = useForm<FormData>({ resolver: zodResolver(schema) });
+  console.log(errors);
 
   const onSubmit = (data: FieldValues) => console.log(data);
 
@@ -21,31 +28,24 @@ const Form = () => {
           Name
         </label>
         <input
-          {...register('name', { required: true, minLength: 3 })}
+          {...register('name')}
           type='text'
           id='name'
           className='form-control'
         />
-        {errors.name?.type === 'required' && (
-          <p className='text-danger'>Please enter your name.</p>
-        )}
-        {errors.name?.type === 'minLength' && (
-          <p className='text-danger'>Name must be at leat 3 characters.</p>
-        )}
+        {errors.name && <p className='text-danger'>{errors.name.message}</p>}
       </div>
       <div className='mb-3'>
         <label htmlFor='age' className='form-label'>
           Age
         </label>
         <input
-          {...register('age', { required: true, min: 14 })}
+          {...register('age', { valueAsNumber: true })}
           type='number'
           id='age'
           className='form-control'
         />
-        {errors.age?.type === 'min' && (
-          <p className='text-danger'>You must be over 14 years old.</p>
-        )}
+        {errors.age && <p className='text-danger'>{errors.age.message}</p>}
       </div>
       <button type='submit' className='btn btn-primary'>
         Submit
